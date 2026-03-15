@@ -184,9 +184,9 @@ class resup(nn.Module):
                     out_channels,
                     sz=2,
                     s=2,
-                    p=1,  # 0,
-                    o_p=1,  # 0,
-                    d=2,  # 1,
+                    p=0,
+                    o_p=0,
+                    d=1,
                 ),
             )
             self.conv.add_module(
