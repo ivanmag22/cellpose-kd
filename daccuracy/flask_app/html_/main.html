@@ -1,0 +1,181 @@
+<!--
+Copyright CNRS/Inria/UniCA
+Contributor(s): Eric Debreuve (eric.debreuve@cnrs.fr) since 2019
+SEE COPYRIGHT NOTICE BELOW
+-->
+
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtfm %}
+
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{% block styles %}
+    {{ super() }}
+    <link
+        rel="icon"
+        href="data:,"
+    />
+    <link
+        rel="stylesheet"
+        type="text/css"
+        href="{{ url_for('static', filename='main.css') }}"
+    />
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 style="margin-top: 18pt"><b>{{ name }}</b>: {{ name_meaning }}</h2>
+
+    {% if about %}
+        <hr/>
+        <h3>About {{ name }}: <small>See Below</small></h3>
+        <hr/>
+    {% endif %}
+
+    {% if session %}
+        <h3>Session State <small>(Used as defaults)</small></h3>
+
+        <div>
+            {{ session | safe }}
+        </div>
+    {% endif %}
+
+    <h3>Inputs and Parameters</h3>
+
+    <p
+        class="container"
+        style="color:DarkGoldenRod">
+        Note: Uploaded files are limited in size to {{ max_file_size }} MB each.
+    </p>
+
+    <!-- https://pythonhosted.org/Flask-Bootstrap/forms.html -->
+    <form
+        role="form"
+        method="post"
+        action=""
+        enctype="multipart/form-data"
+        class="form"
+    >
+        {{ form.hidden_tag() }}
+        {{ wtfm.form_errors(form, hiddens="only") }}
+
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <b>{{ form.reference.label }}</b> {{ form.reference() }}
+                </div>
+                <div class="col">
+                    <b>{{ form.detection.label }}</b> {{ form.detection() }}
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 12pt">
+                <div class="col">
+                    {{ form.relabel_rf.label }} {{ form.relabel_rf() }}
+                </div>
+                <div class="col">
+                    {{ form.relabel_dn.label }} {{ form.relabel_dn() }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    {{ form.tolerance.label }} {{ form.tolerance() }}
+                </div>
+                <div class="col">
+                    {{ form.shifts.label }} {{ form.shifts() }}
+                </div>
+            </div>
+            <div class="row" style="margin-bottom: 12pt">
+                <div class="col">
+                    {{ form.exclude_border.label }} {{ form.exclude_border() }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    {{ form.output_format.label }} {{ form.output_format() }}
+                </div>
+                <div class="col">
+                    {{ form.show_image.label }} {{ form.show_image() }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col" style="margin-top: 16pt; margin-bottom: 8pt">
+                    {{ wtfm.form_field(form.submit) }}
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% if form.errors %}
+        <br clear="all"/>
+        {% for field, errors in form.errors.items() %}
+            <p style="color:Crimson; font-weight:bold"><!-- FIXME: Using a class does not work -->
+                {{ form[field].label }}: {{ ', '.join(errors) }}
+            </p>
+        {% endfor %}
+    {% endif %}
+
+    <hr/>
+
+    {% if outputs %}
+        <h3>Results</h3>
+
+        {{ outputs | safe }}
+        {{ data_management | safe }}
+    {% endif %}
+
+    {% if about %}
+        <hr/>
+        <h3>About {{ name }}</h3>
+
+        {{ about | safe }}
+    {% endif %}
+</div>
+{% endblock %}
+
+<!--
+COPYRIGHT NOTICE
+
+This software is governed by the CeCILL  license under French law and
+abiding by the rules of distribution of free software.  You can  use,
+modify and/ or redistribute the software under the terms of the CeCILL
+license as circulated by CEA, CNRS and INRIA at the following URL
+"http://www.cecill.info".
+
+As a counterpart to the access to the source code and  rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty  and the software's author,  the holder of the
+economic rights,  and the successive licensors  have only  limited
+liability.
+
+In this respect, the user's attention is drawn to the risks associated
+with loading,  using,  modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean  that it is complicated to manipulate,  and  that  also
+therefore means  that it is reserved for developers  and  experienced
+professionals having in-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
+
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL license and that you accept its terms.
+
+SEE LICENCE NOTICE: file README-LICENCE-utf8.txt at project source root.
+
+This software is being developed by Eric Debreuve, a CNRS employee and
+member of team Morpheme.
+Team Morpheme is a joint team between Inria, CNRS, and UniCA.
+It is hosted by the Centre Inria d'Université Côte d'Azur, Laboratory
+I3S, and Laboratory iBV.
+
+CNRS: https://www.cnrs.fr/index.php/en
+Inria: https://www.inria.fr/en/
+UniCA: https://univ-cotedazur.eu/
+Centre Inria d'Université Côte d'Azur: https://www.inria.fr/en/centre/sophia/
+I3S: https://www.i3s.unice.fr/en/
+iBV: http://ibv.unice.fr/
+Team Morpheme: https://team.inria.fr/morpheme/
+-->

@@ -1,0 +1,4 @@
+include README-COPYRIGHT-utf8.txt
+include README-LICENCE-utf8.txt
+include requirements.txt
+include documentation/wiki/description.asciidoc
