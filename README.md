@@ -10,8 +10,8 @@ pip/conda install:
 - numba
 - torchvision
 - tifffile
-- sklearn
-- skimage
+- scikit-learn
+- scikit-image
 - scipy
 - pyqtgraph
 - PyQt5
