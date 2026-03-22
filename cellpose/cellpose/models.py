@@ -450,7 +450,6 @@ class CellposeModel:
         ### create neural network
         self.nchan = nchan
         self.nclasses = 3
-        # nbase = [32, 64, 128, 256]
         self.nbase = [nchan, *nbase]
         self.pretrained_model = pretrained_model
         if backbone == "default":
@@ -497,7 +496,7 @@ class CellposeModel:
                     self.nclasses,
                     sz=3,
                     residual_on=False,
-                    style_on=True,
+                    style_on=False,
                     concatenation=False,
                     mkldnn=self.mkldnn,
                     diam_mean=self.diam_mean,
@@ -540,61 +539,6 @@ class CellposeModel:
             ).to(self.device)
 
         ### load model weights
-        """if self.pretrained_model and nbase==[32, 64, 128, 256]:
-            models_logger.info(f">>>> loading model {pretrained_model}")
-            self.net.load_model(self.pretrained_model, device=self.device)
-            if not builtin:
-                self.diam_mean = self.net.diam_mean.data.cpu().numpy()[0]
-            self.diam_labels = self.net.diam_labels.data.cpu().numpy()[0]
-            models_logger.info(
-                f">>>> model diam_mean = {self.diam_mean: .3f} (ROIs rescaled to this size during training)"
-            )
-            if not builtin:
-                models_logger.info(
-                    f">>>> model diam_labels = {self.diam_labels: .3f} (mean diameter of training ROIs)"
-                )
-            if pretrained_model_ortho is not None:
-                models_logger.info(f">>>> loading ortho model {pretrained_model_ortho}")
-                self.net_ortho = CPnet(
-                    self.nbase,
-                    self.nclasses,
-                    sz=3,
-                    mkldnn=self.mkldnn,
-                    max_pool=True,
-                    diam_mean=self.diam_mean,
-                    depthwise=depthwise,
-                ).to(self.device)
-                self.net_ortho.load_model(pretrained_model_ortho, device=self.device)
-            else:
-                self.net_ortho = None"""
-        """if self.pretrained_model:
-            if nbase==[32, 64, 128, 256]:
-                models_logger.info(f">>>> loading model {pretrained_model}")
-                self.net.load_model(self.pretrained_model, device=self.device)
-            if not builtin:
-                self.diam_mean = self.net.diam_mean.data.cpu().numpy()[0]
-            self.diam_labels = self.net.diam_labels.data.cpu().numpy()[0]
-            models_logger.info(
-                f">>>> model diam_mean = {self.diam_mean: .3f} (ROIs rescaled to this size during training)"
-            )
-            if not builtin:
-                models_logger.info(
-                    f">>>> model diam_labels = {self.diam_labels: .3f} (mean diameter of training ROIs)"
-                )
-            if pretrained_model_ortho is not None:
-                models_logger.info(f">>>> loading ortho model {pretrained_model_ortho}")
-                self.net_ortho = CPnet(
-                    self.nbase,
-                    self.nclasses,
-                    sz=3,
-                    mkldnn=self.mkldnn,
-                    max_pool=True,
-                    diam_mean=self.diam_mean,
-                    depthwise=depthwise,
-                ).to(self.device)
-                self.net_ortho.load_model(pretrained_model_ortho, device=self.device)
-            else:
-                self.net_ortho = None"""
         if self.pretrained_model and nbase == [32, 64, 128, 256]:
             models_logger.info(f">>>> loading model {pretrained_model}")
             self.net.load_model(self.pretrained_model, device=self.device)
@@ -608,20 +552,6 @@ class CellposeModel:
                 models_logger.info(
                     f">>>> model diam_labels = {self.diam_labels: .3f} (mean diameter of training ROIs)"
                 )
-            """if pretrained_model_ortho is not None:
-                models_logger.info(f">>>> loading ortho model {pretrained_model_ortho}")
-                self.net_ortho = CPnet(
-                    self.nbase,
-                    self.nclasses,
-                    sz=3,
-                    mkldnn=self.mkldnn,
-                    max_pool=True,
-                    diam_mean=self.diam_mean,
-                    depthwise=depthwise,
-                ).to(self.device)
-                self.net_ortho.load_model(pretrained_model_ortho, device=self.device)
-            else:
-                self.net_ortho = None"""
         else:
             models_logger.info(f">>>> no model weights loaded")
             self.diam_labels = self.diam_mean
