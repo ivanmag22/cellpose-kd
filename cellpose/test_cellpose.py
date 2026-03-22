@@ -236,7 +236,7 @@ def main(args):
                 path = ""
                 counter = 0
                 while True:
-                    path = f"MASK_{str(diam)}{filt}{'_d' if dilation else ''}{'_u' if upsample_compr else ''}{'_p' if model_path is not None else ''}{'' if counter==0 else f'_{counter}'}.{ext}"
+                    path = f"MASK_{'fastcp_' if args.fastcp else ''}{str(diam)}{filt}{'_d' if dilation else ''}{'_u' if upsample_compr else ''}{'_p' if model_path is not None else ''}{'' if counter==0 else f'_{counter}'}.{ext}"
                     if os.path.isfile(os.path.join(o_path, path)):
                         counter += 1
                     else:
