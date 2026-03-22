@@ -118,6 +118,12 @@ def main(args):
         model.cp.net.load_state_dict(
             torch.load(model_path, map_location=device), strict=False
         )
+    else:
+        if args.fastcp and args.nbase == [16, 32, 64, 128] and not dilation and not upsample_compr and not depthwise:
+            pretrained_path="models/fastcp-pretrained-model/demoglo_nbase=16_conv=2.pth"
+            model.cp.net.load_state_dict(
+                torch.load(pretrained_path, map_location=device), strict=False
+            )
 
     if down_path or up_path:
         weights = model.cp.net.state_dict()
