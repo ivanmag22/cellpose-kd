@@ -70,16 +70,6 @@ def main(args):
     assert i_path is not None and (os.path.isfile(i_path) or os.path.isdir(i_path))
     assert (o_path != "." and os.path.isdir(o_path)) or o_path == "."
 
-    filt = ""
-    if "gauss" in i_path:
-        filt += "_gauss"
-    if "opening" in i_path or "open" in i_path:
-        filt += "_opening"
-    if "median" in i_path:
-        filt += "_median"
-    if "resized" in i_path:
-        filt += "_resized"
-
     if os.path.isdir(i_path):
         # folder: I take only the first result
         img_path = os.path.join(i_path, os.listdir(i_path)[0])
@@ -177,7 +167,7 @@ def main(args):
             path = ""
             counter = 0
             while True:
-                path = f"MASK_{'fastcp_' if args.fastcp else ''}{str(diam)}{filt}{'_d' if dilation else ''}{'_u' if upsample_compr else ''}{'_p' if model_path is not None else ''}{'' if counter==0 else f'_{counter}'}.{ext}"
+                path = f"MASK_{'fastcp_' if args.fastcp else ''}{str(diam)}{'_d' if dilation else ''}{'_u' if upsample_compr else ''}{'_p' if model_path is not None else ''}{'' if counter==0 else f'_{counter}'}.{ext}"
                 if os.path.isfile(os.path.join(o_path, path)):
                     counter += 1
                 else:
@@ -236,7 +226,7 @@ def main(args):
                 path = ""
                 counter = 0
                 while True:
-                    path = f"MASK_{'fastcp_' if args.fastcp else ''}{str(diam)}{filt}{'_d' if dilation else ''}{'_u' if upsample_compr else ''}{'_p' if model_path is not None else ''}{'' if counter==0 else f'_{counter}'}.{ext}"
+                    path = f"MASK_{'fastcp_' if args.fastcp else ''}{str(diam)}{'_d' if dilation else ''}{'_u' if upsample_compr else ''}{'_p' if model_path is not None else ''}{'' if counter==0 else f'_{counter}'}.{ext}"
                     if os.path.isfile(os.path.join(o_path, path)):
                         counter += 1
                     else:
