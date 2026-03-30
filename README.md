@@ -15,10 +15,12 @@ pip/conda install:
 - scipy
 - pyqtgraph
 - PyQt5
+- pyqt5-tools
 - natsort
 - imagecodecs
 - roifile
 - fastremap
+- opencv-python
 
 ## Command
 - **Cellpose-KD**
@@ -29,9 +31,12 @@ python cellpose/test_cellpose.py --input "$file" --diameter 25 --dilation --upsa
 ```bash
 python cellpose/test_cellpose.py --input "$file" --diameter 25 --fastcp --nbase 16 32 64 128 --model_path models/40x/fastcp-kd/Best_model_epoch_55_lr1.00e-03_d25.0.pth --output "$output_dir"
 ```
-- **DAccuracy**
+- [**DAccuracy**](https://src.koda.cnrs.fr/eric.debreuve/daccuracy)
 ```bash
 python daccuracy/package/daccuracy/cli/main.py --gt "gt.csv" --rGcF --dn "dn.tif" -s
+```
+```bash
+python daccuracy/package/daccuracy/cli/main.py --gt "gt.tif" --relabel-gt seq --dn "dn.tif" --relabel-dn seq -s
 ```
 
 ## Teacher-Student learning
