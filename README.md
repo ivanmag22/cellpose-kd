@@ -45,6 +45,7 @@ Here, we present the results on 2D images.
 | **Cellpose-KD** | **115** | **3.30** | 92.07 | 81.60 | 87.17 |
 
 ## Requirements
+Python 3.11+
 
 ```bash
 pip install -r requirements.txt
@@ -117,7 +118,17 @@ python daccuracy/package/daccuracy/cli/main.py \
     --gt "gt.tif" --relabel-gt seq --dn "dn.tif" --relabel-dn seq -s
 ```
 
-> DAccuracy requires every detected object to have a unique label. If your Cellpose output contains repeated labels, fix it first with `utils/label_correction.py`, which produces a `_lab_corrected` output.
+DAccuracy requires every detected object to have a unique label. If your Cellpose output contains repeated labels, as it follows
+
+```
+Checking validity of MASK_25.0_d_u_p.tif...Done
+MASK_25.0_d_u_p.tif: Incorrectly labeled image:
+38 repeated 9 times
+41 repeated 7 times
+43 repeated 5 times
+```
+
+fix it first with `utils/label_correction.py`, which produces a `_lab_corrected` output.
 
 ### Train a model (teacher-student distillation)
 
