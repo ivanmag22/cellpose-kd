@@ -502,27 +502,17 @@ class CellposeModel:
                     diam_mean=self.diam_mean,
                 )
             else:
-                if style:
-                    if depthwise:
-                        self.net = CPnet_depth(
-                            self.nbase,
-                            self.nclasses,
-                            sz=3,
-                            mkldnn=self.mkldnn,
-                            max_pool=pooling,
-                            diam_mean=self.diam_mean,
-                        ).to(self.device)
-                    else:
-                        self.net = CPnet(
-                            self.nbase,
-                            self.nclasses,
-                            sz=3,
-                            mkldnn=self.mkldnn,
-                            max_pool=pooling,
-                            diam_mean=self.diam_mean,
-                        ).to(self.device)
+                if depthwise:
+                    self.net = CPnet_depth(
+                        self.nbase,
+                        self.nclasses,
+                        sz=3,
+                        mkldnn=self.mkldnn,
+                        max_pool=pooling,
+                        diam_mean=self.diam_mean,
+                    ).to(self.device)
                 else:
-                    self.net = CPnet_nostyle(
+                    self.net = CPnet(
                         self.nbase,
                         self.nclasses,
                         sz=3,

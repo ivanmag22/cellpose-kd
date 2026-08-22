@@ -1,110 +1,154 @@
 # Cellpose-KD
-Useful guide to understand the code and what you need to consider for your scripts:
+
+A lightweight, distilled version of [Cellpose](https://github.com/MouseLand/cellpose) for fast nuclei segmentation in 3D fluorescence microscopy. The aim of this repo is to develop a small Cellpose model that runs on CPU, without sacrificing accuracy.
+
+## Brief introduction
+[Cellpose](https://github.com/MouseLand/cellpose) is a state-of-the-art segmentation model for image segmentation of cellular parts.
+However, there are two relevant problems especially on 3D volumes:
+- the 3D instance segmentation is computationally expensive
+- the lack of manually annotated dataset
+
+**Cellpose-KD** is a lightweight model specialized in segmentation of fluorescently labeled nuclei. Its architecture was re-designed to be more efficient and model weights were obtained through **knowledge distillation** from a pre-trained Cellpose teacher, trained on an *unlabeled* dataset of organoid images captured with confocal microscopy (20× and 40× magnification).
+
+We also build on the design of [FastCellpose](https://github.com/YouDengdeng/FastCellpose), a lightweight variant of the baseline: it reduces the number of channels, of convolutions, and it has the transposed convolution layers instead of the upsampling layers.
+
+*Our contribution* was to
+- re-design the architecture by applying
+    - dilation in encoding convolution layers
+    - depthwise separable convolutions in encoding and decoding paths
+- use knowledge distillation technique to transfer baseline expertise to our small models.
+
+## Results
+
+Cellpose-KD is **56× smaller** than baseline Cellpose (in terms of parameters and MACs) and **8.4× faster on CPU** for 3D segmentation.
+
+### 3D inference benchmark
+
+Here, we show how much fast is our model wrt to the other ones on 3D volumes (200-slice, 1024×1024 stack).
+
+| Model | Parameters (K) | Inference time (min) |
+|---|---|---|
+| Cellpose (baseline) | 6,600 | 82.67 |
+| Distilled FastCellpose-KD | 564 | 20.11 |
+| **Cellpose-KD** | **115** | **9.79** |
+
+### 2D segmentation benchmark
+
+This model matches baseline accuracy and generalizes to external 2D benchmarks (DAPI, BitDepth).
+
+Here, we present the results on 2D images.
+
+| Model | Parameters (K) | Inference time (s) | F1 - ours (%) | F1 - DAPI (%) | F1 - BitDepth (%) |
+|---|---|---|---|---|---|
+| Cellpose (baseline) | 6,600 | 14.12 | 92.10 | 93.07 | 83.81 |
+| Distilled FastCellpose-KD | 564 | 4.47 | 93.01 | 81.27 | 87.38 |
+| **Cellpose-KD** | **115** | **3.30** | 92.07 | 81.60 | 87.17 |
 
 ## Requirements
-pip/conda install:
-- numpy
-- torch
-- matplotlib
-- tqdm
-- numba
-- torchvision
-- tifffile
-- scikit-learn
-- scikit-image
-- scipy
-- pyqtgraph
-- PyQt5
-- pyqt5-tools
-- natsort
-- imagecodecs
-- roifile
-- fastremap
-- opencv-python
 
-## Command
-- **Cellpose-KD**
 ```bash
-python cellpose/test_cellpose.py --input "$file" --diameter 25 --dilation --upsample_compr --nbase 16 32 64 128 --depthwise --model_path models/40x/cp-kd/Best_model_epoch_20_lr1.00e-03_d25.0.pth --output "$output_dir"
+pip install -r requirements.txt
 ```
-- **FastCellpose-KD**
-```bash
-python cellpose/test_cellpose.py --input "$file" --diameter 25 --fastcp --nbase 16 32 64 128 --model_path models/40x/fastcp-kd/Best_model_epoch_55_lr1.00e-03_d25.0.pth --output "$output_dir"
+
+## Repository structure
+
 ```
-- [**DAccuracy**](https://src.koda.cnrs.fr/eric.debreuve/daccuracy)
+cellpose-kd/
+├── cellpose/
+│   ├── cellpose/
+│   │   ├── models.py               # model definition + mask post-processing
+│   │   ├── resnet_torch.py         # original Cellpose U-Net architecture
+│   │   ├── dilated_resnet.py       # encoder compression (fewer layers + dilation)
+│   │   ├── upsample_resnet.py      # decoder compression (+ transposed convs)
+│   │   ├── downup_resnet.py        # combined encoder + decoder compression
+│   │   ├── resnet_torchv2.py       # depthwise separable convolutions
+│   │   ├── downup_resnetv2.py      # Cellpose-KD: combined compression + depthwise separable convs
+│   │   ├── fastcp_resnet_torch.py  # FastCellpose architecture
+│   │   └── __main__.py             # GUI entry point
+│   ├── cellpose_metrics.py         # parameter / MACs counter
+│   ├── test_cellpose.py            # inference script
+│   ├── train_kd_batch.py           # teacher-student training (Cellpose-KD)
+│   ├── train_kd_batch_fastcp.py    # teacher-student training (FastCellpose-KD)
+│   └── utils.py                    # polynomial LR scheduler, etc.
+├── daccuracy/                       # segmentation accuracy evaluation (external tool)
+├── utils/
+│   └── label_correction.py         # relabels masks so every object has a unique ID
+└── models/
+    ├── 40x/
+    │   ├── cp-kd/       # Cellpose-KD checkpoints
+    │   └── fastcp-kd/   # FastCellpose-KD checkpoints
+    └── 20x/
+        ├── cp-kd/
+        └── fastcp-kd/
+```
+
+## Usage
+
+### Run inference
+Commands to launch the models (pre-trained model for 40× magnification)
+
+**Cellpose-KD**
 ```bash
+python cellpose/test_cellpose.py \
+    --input "$file" --diameter 25 --dilation --upsample_compr \
+    --nbase 16 32 64 128 --depthwise \
+    --model_path models/40x/cp-kd/Best_model_epoch_20_lr1.00e-03_d25.0.pth \
+    --output "$output_dir"
+```
+
+**FastCellpose-KD**
+```bash
+python cellpose/test_cellpose.py \
+    --input "$file" --diameter 25 --fastcp --nbase 16 32 64 128 \
+    --model_path models/40x/fastcp-kd/Best_model_epoch_55_lr1.00e-03_d25.0.pth \
+    --output "$output_dir"
+```
+
+`test_cellpose.py` accepts 2D or 3D input, reports inference time, and saves the predicted mask (use `--no_mask` to skip mask generation).
+
+### Evaluate against ground truth ([DAccuracy](https://src.koda.cnrs.fr/eric.debreuve/daccuracy))
+
+```bash
+# CSV ground truth
 python daccuracy/package/daccuracy/cli/main.py --gt "gt.csv" --rGcF --dn "dn.tif" -s
+
+# Image ground truth, with relabeling
+python daccuracy/package/daccuracy/cli/main.py \
+    --gt "gt.tif" --relabel-gt seq --dn "dn.tif" --relabel-dn seq -s
 ```
-```bash
-python daccuracy/package/daccuracy/cli/main.py --gt "gt.tif" --relabel-gt seq --dn "dn.tif" --relabel-dn seq -s
-```
 
-## Teacher-Student learning
-To deal with unlabelled dataset, the intuition is to give as input an image to Cellpose with model_type="nuclei" (or a variant obtained as mentioned in the previous chapter) and to a smaller variant and to let the second one learn from the first model.
-I used the standard loss function from original Cellpose. But, I changed the value of weighted lambda parameter in gradient flows contribution. I set this parameter to 1 with the following motivation: during training we are working with outputs from two models, so we need to compute directly the difference between teacher and student's outputs and not the same. So, the resulting method is the following:
-```python
-def _loss_fn_seg1(lbl, y, device):
-    """
-    Calculates the loss function between true labels lbl and prediction y.
+> DAccuracy requires every detected object to have a unique label. If your Cellpose output contains repeated labels, fix it first with `utils/label_correction.py`, which produces a `_lab_corrected` output.
 
-    Args:
-        lbl (numpy.ndarray): True labels (cellprob, flowsY, flowsX).
-        y (torch.Tensor): Predicted values (flowsY, flowsX, cellprob).
-        device (torch.device): Device on which the tensors are located.
+### Train a model (teacher-student distillation)
 
-    Returns:
-        torch.Tensor: Loss value.
+Use `train_kd_batch.py` (Cellpose-KD) or `train_kd_batch_fastcp.py` (FastCellpose-KD). Key ideas:
 
-    """
-    criterion = nn.MSELoss(reduction="mean")
-    criterion2 = nn.BCEWithLogitsLoss(reduction="mean")
-    veci = 1.0 * torch.from_numpy(lbl[:, 1:]).to(
-        device
-    )  # 5.0 * torch.from_numpy(lbl[:, 1:]).to(device)
-    loss = criterion(y[:, :2], veci)
-    loss /= 2.0
-    loss2 = criterion2(y[:, -1], torch.from_numpy(lbl[:, 0] > 0.5).to(device).float())
-    loss = loss + loss2
-    return loss
-```
-The [issue](https://github.com/MouseLand/cellpose/issues/1120) solved (partially) my doubts: in our case we need to set this value to 1 since we are dealing with outputs from two models and we are not comparing a GT mask (whose flows are obtained with *dynamics.py / masks_to_flows()* method and its values are in [-1,1] range) and model output.
+- **Teacher**: generalist Cellpose (`model_type="nuclei"`), or any pre-trained model compatible with that model type
+- **Student**: any compact variant (dilated, upsample-compressed, depthwise separable, etc.), with architecture controlled via `--nbase`
+- Teacher and student use the **same diameter** for a fair comparison
+- Loss is computed between teacher and student outputs directly (not against a ground-truth mask), using a modified gradient-flow loss: the gradient-flow weighting term `lambda` is set to `1` rather than the original `5`, since it compares **two model outputs** (teacher vs. student) instead of teacher's normalized output and student's output (see [Cellpose issue #1120](https://github.com/MouseLand/cellpose/issues/1120) for the reasoning)
+- Validation is measured via IoU on cell probability maps (not full masks, since masks are numpy arrays and harder to handle on GPU)
+- Supports resuming interrupted training, configurable validation frequency, and checkpointing every N epochs
+- Supports freezing layers selectively (e.g. only transposed-conv layers, only encoder, only decoder) and loading partial weights (encoder-only, decoder-only)
+- Style branches can optionally be removed
+- For 2D data, pass `--patches` (recommended) or `--slices` (more prone to out-of-memory); 3D training from raw volumes is not supported by this script
+- Optional data augmentation to expand the effective dataset size
 
-## Models
-Useful guide to models, since there are too many. We will see only models/cellpose folder.
-- **Cellpose-KD**: our final version
-    - 40X dataset:
-        - models/40x/cp-kd/Best_model_epoch_20_lr1.00e-03_d25.0.pth
-    - 20X dataset:
-        - models/20x/cp-kd/Best_model_epoch_210_lr1.00e-03_d25.0.pth
-- **FastCellpose-KD**
-    - 40X dataset:
-        - models/40x/fastcp-kd/Best_model_epoch_55_lr1.00e-03_d25.0.pth
-    - 20X dataset:
-        - models/20x/fastcp-kd/Best_model_epoch_240_lr1.00e-03_d25.0.pth
+## Pre-trained models
 
+| Variant | Magnification | Path |
+|---|---|---|
+| Cellpose-KD | 40× | `models/40x/cp-kd/Best_model_epoch_20_lr1.00e-03_d25.0.pth` |
+| Cellpose-KD | 20× | `models/20x/cp-kd/Best_model_epoch_210_lr1.00e-03_d25.0.pth` |
+| FastCellpose-KD | 40× | `models/40x/fastcp-kd/Best_model_epoch_55_lr1.00e-03_d25.0.pth` |
+| FastCellpose-KD | 20× | `models/20x/fastcp-kd/Best_model_epoch_240_lr1.00e-03_d25.0.pth` |
+
+## Measuring model complexity
+
+`cellpose/cellpose_metrics.py` reports parameter count and MACs (Multiply-Accumulate Computations) for a given input shape (default `1×2×1024×1024`, but `z`, `x`, `y` are configurable). Supports Cellpose, dilated (encoder-only compression), transposed-conv (decoder-only compression), fully compressed, depthwise separable, and pruned variants.
 
 ## GUI
-To run the GUI you need to type the following in the command line:
-```
+
+```bash
 python cellpose/cellpose/__main__.py
 ```
-Then open *Models > Training instructions* to understand the step that you need to train your model with human-in-the-loop approach.
-Otherwise for more simple operations, like obtaining the instance segmentation mask, you can select the model and then run it. But maybe for model_type="nuclei" setting a value for diameter is not possible.
-
-## Code
-- **cellpose**: generalist algorithm for semantic and instance segmentation of cells.
-    - *cellpose/cellpose/models.py*: it contains classes and methods useful for the definition of the model. We can define it as a two-stage model: the first part is represented by the network and it computes the output in terms of cellprob, gradient flows and style vector; the second part computes the correspondant mask from the previous output. It is possible to execute only the first part by setting *compute_masks=False*.
-    - *cellpose/cellpose/resnet_torch.py*: this script contains the original classes for the U-Net like architecture. Given nbase=[32,64,128,256] which represents the number of channels during the downsample part (the reverse for upsample part), each encoding/decoding unit contains four convolutional layers and a pooling layer (downsample) or unpooling layer (upsample). I worked mostly on *resdown* and *resup* classes, but later I had touched also *downsample* and *upsample* classes.
-    - *cellpose/cellpose/dilated_resnet.py*: network compression applied only on encoding path. It contains in downsample a lower number of convolution layers (from 4 to 2 per each encoding unit) and in order to get a good result I introduced dilation in order to have a feature map with a higher receptive field, so that can summarize well the input and the previous feature maps (but previously activation function was also applied!). Dilation is applied only on the second convolution layer of the unit.
-    - *cellpose/cellpose/upsample_resnet.py*: network compression applied only on decoding path. This version contains not only the upsampling layer, but also transposed convolutional layers.  I alternate both layers.
-    - *cellpose/cellpose/downup_resnet.py*: given the compression made in downsample (dilated_resnet.py) and in upsample part (upsample_resnet.py), the number of parameters and MACs decreases in a good way. 
-    - *cellpose/cellpose/resnet_torchv2.py*: it is a version of resnet_torch.py where I replace traditional convolutional layers with depthwise separable convolutional ones, so convolution operation is decomposed into simpler parts, in order to decrease the amount of parameters and of MACs. At the same time a good training is needed in order to find a good set of weights for this simple model.
-    - *cellpose/cellpose/downup_resnetv2.py*: this script contains the architecture compressed in both encoding and decoding paths; moreover, it contains both depthwise separable convolution layer and transposed version.
-    - *cellpose/cellpose/fastcp_resnet_torch.py*: it contains FastCP network definition. Here, you can see that by enabling residual_on you will adopt Cellpose architecture with two layers per encoding/decoding unit, while by setting it to False you will adopt transposed convolutional layers instead of upsampling layers. Furthermore, style branches can be "cut" by disabling style_on. I do not know too much about concatenation.
-    - *cellpose/cellpose_metrics.py*: script useful to get number of parameters and number of MACs (Multiply-Accumulate Computations) given a tensor of shape (1,2,1024,1024) (it is possible to change number of slices, width and height by passing different values to z, x, y arguments respectively). You can tell if you want to get these statistics for Cellpose, Cellpose with dilation (downsample compression), Cellpose with transposed convolutional layers (upsample compression), Compressed Cellpose, Cellpose with depthwise separable convolutions, pruned Cellpose etc.
-    - *cellpose/test_cellpose.py*: given in input a 2D or 3D sample, it computes the prediction and also the mask and it returns also the inference time. The mask will be saved in the directory where the script is ran or with --option argument you can specify the folder where to save the mask. To not generate the mask, you must enable --no_mask argument. You can use several variants of Cellpose and you can pass the desired value for diameter. 
-    - *cellpose/train_kd_batch.py*: script that contains useful methods for teacher-student learning (with teacher's weights fixed). As *teacher**, usually we use generalist Cellpose with model_type="nuclei" as teacher, but if you want you can load a pretrained model (always compatible with "nuclei" model type). As **student** you can use the model you prefer, by specifying the argument for Dilated Cellpose, Upsample Compressed Cellpose, Compressed Cellpose, Cellpose with depthwise separable convolutions and other variants. Furthermore, you can modify the architecture by defining the number of feature maps per layer with *nbase*. You can always load weights from pre-trained model by defining its path. You can use other values for batch size, learning rate,, number of epochs optimizer etc.; you can adopt the loss function that you want (standard one or the one with lambda=1 that seems to work better than the previous one). If your training was interrupted, you can resume by specifying the number of epoch, in order to pick that model and to continue the training. You can decide what is the frequency of validation during training. Model are saved every checkpoint_step epoch(s) (by default every 1 epoch). An important hyper-parameter is the diameter, that represents the average size of objects to detect; in this case both teacher and student have the same value in order to have a coherent comparison. The comparison is made in terms of IoU (binary classification, background or nuclei pixels) and it considers only cellprob because they are torch tensors and on GPU it is more difficult to handle masks that are numpy.ndarrays (if you want to see the metrics, go to cellpose/cellpose/metrics.py). If you want to train only a set of layers you can decide to freeze all layers with the exception of transposed convolution ones, to freeze layers from downsample part or to freeze layers from upsample part; freezing some layers can be useful to train only the layers that you want to optimize and not the whole network. You can load only the weights from downsample part, weights from upsample part or both. Moreover you can decide to keep or remove style branches (they could be useless). If you dataset is composed by 3D samples do not pass anything, otherwise pass --slices if you want to train on slices or --patches if you want to train on patches (this script works really well with patches; it can work also with slices, but you can encounter Out-Of-Memory error; it does not contain methods for training on 3D samples); you need to specify which is the folder to get the samples and how many samples take and if you want if to take an equal number for each phenotypic class. It is possible to adopt data augmentation to increase virtually your dataset.
-    - *cellpose/train_kd_batch_fastcp.py*: it is like cellpose/train_kd_batch.py, but it adopts as student FastCellpose model (and as teacher Cellpose model). You can set to True some flags for resnet layers, style branches and concatenation operations (we can see these later).
-    - *cellpose/utils.py*: it contains polinomial learning rate scheduler method.
-- **utils**:
-    - *label_correction.py*: this script allows to obtain an image (2D/3D) where each label is not repeated. The output will have the suffix "_lab_corrected". It is useful because sometimes Cellpose segmentation maps are not allowed as detection for DAccuracy due to the repetition of some labels (one constraint of DAccuracy is that each detected object must have an unique value as label)
