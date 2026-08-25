@@ -43,7 +43,7 @@ from cellpose.transforms import (
 
 from cellpose.train import _loss_fn_seg, _loss_fn_seg1, _get_batch, _reshape_norm
 
-from utils import poly_lr_scheduler
+from cellpose.utils import poly_lr_scheduler
 
 from dataset.dataset import OrgDataset, OrgDataset_patches, OrgDataset_slices
 
