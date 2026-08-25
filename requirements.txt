@@ -16,3 +16,7 @@ imagecodecs
 roifile
 fastremap
 opencv-python
+torchinfo
+thop
+calflops
+transformers
