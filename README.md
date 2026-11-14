@@ -34,11 +34,11 @@ Here, we show how much fast is our model wrt to the other ones on 3D volumes (20
 
 ### 2D segmentation benchmark
 
-This model matches baseline accuracy and generalizes to external 2D benchmarks (DAPI, BitDepth).
+This model matches baseline accuracy and generalizes to external 2D benchmarks (Kromp, BitDepth).
 
 Here, we present the results on 2D images.
 
-| Model | Parameters (K) | Inference time (s) | F1 - ours (%) | F1 - DAPI (%) | F1 - BitDepth (%) |
+| Model | Parameters (K) | Inference time (s) | F1 - ours (%) | F1 - Kromp (%) | F1 - BitDepth (%) |
 |---|---|---|---|---|---|
 | Cellpose (baseline) | 6,600 | 14.12 | 92.10 | 93.07 | 83.81 |
 | Distilled FastCellpose-KD | 564 | 4.47 | 93.01 | 81.27 | 87.38 |
