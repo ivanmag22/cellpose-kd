@@ -88,6 +88,13 @@ cellpose-kd/
 ### Run inference
 Commands to launch the models (pre-trained model for 40× magnification)
 
+**Cellpose**
+```bash
+python cellpose/test_cellpose.py \
+    --input "$file" --diameter 25 \
+    --output "$output_dir"
+```
+
 **Cellpose-KD**
 ```bash
 python cellpose/test_cellpose.py \
