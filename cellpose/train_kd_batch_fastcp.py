@@ -541,7 +541,7 @@ def train_kd(
                     # all layers, no transposed convolution layers
                     if isinstance(module, nn.BatchNorm2d):
                         module.eval()
-        # teacher model in train mode
+        # teacher model in eval mode
         teacher_model.cp.net.eval()
 
         # Use tqdm for progress bar
